@@ -3,6 +3,9 @@ uuid = "149900c0-240c-4222-87c1-7808fe3d6070"
 authors = ["Said Harb"]
 version = "0.1.0"
 
+[deps]
+TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+
 [compat]
 julia = "1.8"
 
