@@ -167,16 +167,13 @@ function neper_julia_mesh(;
 end
 
 """
-    neper_julia_visualize(base_name::String, parent_folder::String, tesselation::Dict, meshing::Dict)
+    neper_julia_visualize(tess::String)
 
 Args:
-    base_name (String): Name of the tesselation and orientation file
-    parent_folder (String): Root directory
-    tesselation (Dict): Dictionary containg the tesselation parameters
-    meshing (Dict): Dictionary containg the meshing parameters
+    tess: path to tesselation file or directory containing tesselation
 
 Returns:
-    Creates a visualization of the tesselation and the mesh if it exists
+    Creates a visualization of the tesselation
 """
 function neper_julia_visualize_tess(;
     tess = Nothing)
@@ -197,8 +194,6 @@ function neper_julia_visualize_tess(;
     else
         error("Tesselation file does not exist.")
     end
-    
-
     dir_name = dirname(tess_file)
     base_name_with_ext = basename(tess_file)
     base_name, ext = splitext(base_name_with_ext)
@@ -207,29 +202,98 @@ function neper_julia_visualize_tess(;
     end
 end
 
-function neper_julia_visadgrfsualize_mesh(;
-    tess_name = Nothing,
-    mesh_name = Nothing)
+"""
+give dir with mesh name (toml)
+or give mesh path directly
 
-    if tess_name === Nothing && mesh_name === Nothing
-        error("No tesselation and mesh files provided.")
+mesh_dir: path to directory containing meshes 
+"""
+function neper_julia_visualize_mesh(;
+    mesh_dir = Nothing,
+    mesh_name = Nothing,
+    mesh_file = Nothing)
+
+    # Check input arguments
+    if mesh_dir === Nothing && mesh_file === Nothing && mesh_name === Nothing
+        error("No mesh directory or mesh file provided.")
+    elseif  mesh_dir === Nothing && mesh_file === Nothing && mesh_name !== Nothing
+        error("No mesh directory provided for mesh $mesh_name.")
+    elseif mesh_dir === Nothing && mesh_file !== Nothing && mesh_name === Nothing
+        if !isfile(mesh_file)
+            error("Given mesh file $mesh_file does not exist")
+        end
+    elseif mesh_dir !== Nothing && mesh_file !== Nothing && mesh_name === Nothing
+        println("Ignoring mesh directory $mesh_dir, because mesh file was given and no mesh name was given.")
+    elseif mesh_dir === Nothing && mesh_file !== Nothing && mesh_name !== Nothing
+        println("Ignoring mesh name $mesh_name, because mesh file was given and no mesh directory was given")
     end
-    if !isfile(tess_name) && !isfile(mesh_name)
-        error("The provided tesselation and mesh files do not exist.")
-    end
-    if tess_name !== Nothing && isfile(tess_name)
-        dir_name = dirname(tess_name)
-        base_name_with_ext = basename(tess_name)
+
+    # CASE 1: Mesh directory given and mesh name given -> visualize that specific mesh
+    toml_path= Nothing
+
+    if mesh_dir !== Nothing && mesh_name !== Nothing
+
+        # find toml file in given directory
+        files = readdir(mesh_dir)
+        toml_path = filter(file -> endswith(file, ".toml"), files)
+        if length(toml_path) != 1
+            error("More than one toml file in the given directory.")
+        else
+            toml_path = joinpath(mesh_dir, toml_path[1])
+        end
+
+        # read toml file and extract path of given mesh name and path of corresponding tess
+        toml_data = TOML.parsefile(toml_path)
+        meshes = toml_data["MESHES"]
+        tesselation = toml_data["TESSELATION"]
+        if haskey(tesselation, "path")
+            tess_path = tesselation["path"]
+        else
+            error("Tesselation file does not exist.")
+        end
+        if haskey(meshes, mesh_name)
+            mesh = meshes[mesh_name]
+            mesh_path = mesh["path"]
+        else
+            error("No mesh named $mesh_name in directory $mesh_dir")
+        end
+
+        base_name_with_ext = basename(mesh_path)
         base_name, ext = splitext(base_name_with_ext)
-        file_name = joinpath(dir_name, base_name)
-        run(`neper -V $tess_name -print $file_name`)
+        file_name = base_name #joinpath(mesh_dir, base_name) 
+        # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
+
+        run(`neper -V $tess_path,$mesh_path -print $file_name`)
     end
-    if (tess_name !== Nothing && isfile(tess_name)) && (mesh_name !== Nothing && isfile(mesh_name))
-        dir_name = dirname(tess_name)
-        base_name_with_ext = basename(mesh_name)
+
+    # CASE 2: Mesh file path given -> visualize that specific mesh
+    toml_path= Nothing
+    if mesh_file !== Nothing
+
+        # find toml file in directory of given file
+        mesh_dir = dirname(mesh_file)
+        files = readdir(mesh_dir)
+        toml_path = filter(file -> endswith(file, ".toml"), files)
+        if length(toml_path) != 1
+            error("More than one toml file in the given directory.")
+        else
+            toml_path = joinpath(mesh_dir, toml_path[1])
+        end
+
+        # read toml file and extract path of given of corresponding tess
+        toml_data = TOML.parsefile(toml_path)
+        tesselation = toml_data["TESSELATION"]
+        if haskey(tesselation, "path")
+            tess_path = tesselation["path"]
+        else
+            error("Tesselation file does not exist.")
+        end
+
+        base_name_with_ext = basename(mesh_file)
         base_name, ext = splitext(base_name_with_ext)
-        file_name = joinpath(dir_name, base_name)
-        run(`neper -V $tess_name,$mesh_name -print $file_name`)
+        file_name = base_name #joinpath(mesh_dir, base_name)
+        # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
+        run(`neper -V $tess_path,$mesh_file -print $file_name`)
     end
 end
 
