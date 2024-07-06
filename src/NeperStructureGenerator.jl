@@ -1,6 +1,7 @@
 module NeperStructureGenerator
 
 using TOML 
+using Base.Filesystem
 
 const tesselation_defaults = Dict(
     "id" => 1, # used as seed
@@ -156,15 +157,73 @@ function neper_julia_mesh(;
 
     dir_name = dirname(tess_name)
     mesh_path = generate_directory_name(dir_name, meshing_settings) * ".msh"
+
+    mesh_path = get_unique_path(mesh_path)
     if custom_mesh_name !== Nothing
         create_toml_data(custom_mesh_name, meshing_settings, mesh_path)
     else
         create_toml_data(mesh_path, meshing_settings, mesh_path)
     end
+    
+    
 
     run(`neper -M $tess_name $(create_cmdargs(meshing_settings)) -o $mesh_path -format msh,inp`)
     return mesh_path
 end
+
+function get_unique_path(base_path::AbstractString)
+    println(base_path)
+    if !isfile(base_path)
+        return base_path  
+    end
+    
+    dir, name = splitpath(base_path)
+    name, ext = splitext(name)
+    
+    suffix = 1
+    while true
+        new_path = joinpath(dir, "$(name)_v$suffix$ext")
+        if !isfile(new_path)
+            return new_path  
+        end
+        suffix += 1
+    end
+end
+
+function visualize_directory(;
+    directory_path = pwd())
+
+    # search for directories 
+    directories = filter(isdir, readdir(directory_path))
+
+    # filter directories with input.toml file
+    matching_directories = String[]
+    for dir in directories
+        input_toml_path = joinpath(directory_path, dir, "input.toml")
+        if isfile(input_toml_path)
+            push!(matching_directories, joinpath(directory_path, dir))
+        end
+    end
+
+    # visualize the contents
+    # CASE 1: Directory was given
+    if length(matching_directories) == 0
+        files_dir = readdir(directory_path)
+        if "input.toml" in files_dir
+            NeperStructureGenerator.neper_julia_visualize_tess(tess = directory_path)
+            NeperStructureGenerator.neper_julia_visualize_mesh(mesh_dir = directory_path, visualize_all = true)
+        end
+    # CASE 2: No directory was given, therefore pwd() is the directory‚ 
+    else
+        for dir in matching_directories
+            println(dir)
+            NeperStructureGenerator.neper_julia_visualize_tess(tess = dir)
+            NeperStructureGenerator.neper_julia_visualize_mesh(mesh_dir = dir, visualize_all = true)
+        
+        end
+    end
+end
+
 
 """
     neper_julia_visualize(tess::String)
@@ -197,7 +256,9 @@ function neper_julia_visualize_tess(;
     dir_name = dirname(tess_file)
     base_name_with_ext = basename(tess_file)
     base_name, ext = splitext(base_name_with_ext)
-    file_name = joinpath(dir_name, base_name)
+    file_name = joinpath(dir_name, base_name) #base_name
+    # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
+    
     run(`neper -V $tess_file -print $file_name`)
     end
 end
@@ -211,7 +272,8 @@ mesh_dir: path to directory containing meshes
 function neper_julia_visualize_mesh(;
     mesh_dir = Nothing,
     mesh_name = Nothing,
-    mesh_file = Nothing)
+    mesh_file = Nothing,
+    visualize_all = false)
 
     # Check input arguments
     if mesh_dir === Nothing && mesh_file === Nothing && mesh_name === Nothing
@@ -226,12 +288,13 @@ function neper_julia_visualize_mesh(;
         println("Ignoring mesh directory $mesh_dir, because mesh file was given and no mesh name was given.")
     elseif mesh_dir === Nothing && mesh_file !== Nothing && mesh_name !== Nothing
         println("Ignoring mesh name $mesh_name, because mesh file was given and no mesh directory was given")
+    elseif visualize_all == true && mesh_name !== Nothing && mesh_dir !== Nothing
+        println("Ignoring mesh name, because visualize_all is set to true, therefore all meshes are visualized")
     end
-
     # CASE 1: Mesh directory given and mesh name given -> visualize that specific mesh
     toml_path= Nothing
 
-    if mesh_dir !== Nothing && mesh_name !== Nothing
+    if (mesh_dir !== Nothing && mesh_name !== Nothing) || (mesh_dir !== Nothing && visualize_all == true)
 
         # find toml file in given directory
         files = readdir(mesh_dir)
@@ -251,19 +314,30 @@ function neper_julia_visualize_mesh(;
         else
             error("Tesselation file does not exist.")
         end
-        if haskey(meshes, mesh_name)
-            mesh = meshes[mesh_name]
-            mesh_path = mesh["path"]
+        if visualize_all == false
+            if haskey(meshes, mesh_name)
+                mesh = meshes[mesh_name]
+                mesh_path = mesh["path"]
+            else
+                error("No mesh named $mesh_name in directory $mesh_dir")
+            end
+
+            base_name_with_ext = basename(mesh_path)
+            base_name, ext = splitext(base_name_with_ext)
+            file_name = joinpath(mesh_dir, base_name) #base_name #
+            # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
+
+            run(`neper -V $tess_path,$mesh_path -print $file_name`)
         else
-            error("No mesh named $mesh_name in directory $mesh_dir")
+            for (key, dict) in meshes
+                mesh_path = dict["path"]
+                base_name_with_ext = basename(mesh_path)
+                base_name, ext = splitext(base_name_with_ext)
+                file_name = joinpath(mesh_dir, base_name) # base_name #
+                # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
+                run(`neper -V $tess_path,$mesh_path -print $file_name`)
+            end
         end
-
-        base_name_with_ext = basename(mesh_path)
-        base_name, ext = splitext(base_name_with_ext)
-        file_name = base_name #joinpath(mesh_dir, base_name) 
-        # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
-
-        run(`neper -V $tess_path,$mesh_path -print $file_name`)
     end
 
     # CASE 2: Mesh file path given -> visualize that specific mesh
@@ -291,9 +365,11 @@ function neper_julia_visualize_mesh(;
 
         base_name_with_ext = basename(mesh_file)
         base_name, ext = splitext(base_name_with_ext)
-        file_name = base_name #joinpath(mesh_dir, base_name)
+        file_name = joinpath(mesh_dir, base_name) #base_name
         # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
         run(`neper -V $tess_path,$mesh_file -print $file_name`)
     end
 end
+
+
 
