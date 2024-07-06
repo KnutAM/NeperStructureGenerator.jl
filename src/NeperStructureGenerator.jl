@@ -24,6 +24,7 @@ const meshing_defaults = Dict(
 Generate a string with the format `"<key1><value1>_<key2><value2>_..."` where
 the keys are sorted. 
 """
+
 function name_from_dict(d::Dict)
     formatted_entries = []
     for key in sort(collect(keys(d)))
@@ -80,17 +81,36 @@ function create_toml_data(name:: String, dict::Dict, file_path::String)
     toml_path = joinpath(toml_path, "input.toml")
     if isfile(toml_path)
         toml_data = TOML.parsefile(toml_path)
-        if !haskey(toml_data, name)
-            toml_data[name] = dict
-            toml_data[name]["path"] = file_path
-            open(toml_path, "w") do file
-                TOML.print(file, toml_data)
-            end
+        num_keys = length(keys(toml_data["MESHES"]))
+        println("Number of keys in 'MESHES': $num_keys")
+        println("Keys in 'MESHES':")
+        for key in keys(toml_data["MESHES"])
+            println(key)
         end
+        mesh_name = "Mesh_" * string(num_keys)
+        toml_data["MESHES"][mesh_name] = dict
+        toml_data["MESHES"][mesh_name]["path"] = file_path
+        # if !haskey(toml_data, name)
+        #     toml_data[name] = dict
+        #     toml_data[name]["path"] = file_path
+        open(toml_path, "w") do file
+            TOML.print(file, toml_data)
+        end
+        println("Number of keys in 'MESHES': $num_keys")
+        println("Keys in 'MESHES':")
+        for key in keys(toml_data["MESHES"])
+            println(key)
+        end
+        # end
+        # for (key, sub_dict) in toml_data
+        #     println("Keys in '$key':")
+        #     println(keys(sub_dict))
+        # end
 
     else
         toml_data = Dict(name => dict)
         toml_data[name]["path"] = file_path
+        toml_data["MESHES"] = Dict()
         open(toml_path, "w") do file
             TOML.print(file, toml_data)
         end
