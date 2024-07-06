@@ -82,31 +82,18 @@ function create_toml_data(name:: String, dict::Dict, file_path::String)
     if isfile(toml_path)
         toml_data = TOML.parsefile(toml_path)
         num_keys = length(keys(toml_data["MESHES"]))
-        println("Number of keys in 'MESHES': $num_keys")
-        println("Keys in 'MESHES':")
         for key in keys(toml_data["MESHES"])
             println(key)
         end
         mesh_name = "Mesh_" * string(num_keys)
         toml_data["MESHES"][mesh_name] = dict
         toml_data["MESHES"][mesh_name]["path"] = file_path
-        # if !haskey(toml_data, name)
-        #     toml_data[name] = dict
-        #     toml_data[name]["path"] = file_path
         open(toml_path, "w") do file
             TOML.print(file, toml_data)
         end
-        println("Number of keys in 'MESHES': $num_keys")
-        println("Keys in 'MESHES':")
         for key in keys(toml_data["MESHES"])
             println(key)
         end
-        # end
-        # for (key, sub_dict) in toml_data
-        #     println("Keys in '$key':")
-        #     println(keys(sub_dict))
-        # end
-
     else
         toml_data = Dict(name => dict)
         toml_data[name]["path"] = file_path
@@ -191,7 +178,36 @@ Args:
 Returns:
     Creates a visualization of the tesselation and the mesh if it exists
 """
-function neper_julia_visualize(;
+function neper_julia_visualize_tess(;
+    tess = Nothing)
+    tess_file = Nothing
+    if tess === Nothing 
+        error("No tesselation provided.")
+    end
+    if isdir(tess)
+        tessfiles = readdir(tess)
+        tess_file = filter(file -> endswith(file, ".tess"), tessfiles)
+        if length(tess_file) != 1
+            error("More than one tesselation file in the given directory")
+        else
+            tess_file = joinpath(tess, tess_file[1])
+        end
+    elseif isfile(tess)
+        tess_file = tess
+    else
+        error("Tesselation file does not exist.")
+    end
+    
+
+    dir_name = dirname(tess_file)
+    base_name_with_ext = basename(tess_file)
+    base_name, ext = splitext(base_name_with_ext)
+    file_name = joinpath(dir_name, base_name)
+    run(`neper -V $tess_file -print $file_name`)
+    end
+end
+
+function neper_julia_visadgrfsualize_mesh(;
     tess_name = Nothing,
     mesh_name = Nothing)
 
@@ -217,4 +233,3 @@ function neper_julia_visualize(;
     end
 end
 
-end
