@@ -77,23 +77,21 @@ Args:
 Returns:
     Logs the parameters of each individual tesselation file and the respective mesh files
 """
-function create_toml_data(name:: String, dict::Dict, file_path::String)
+function create_toml_data(name:: String, dict::Dict, file_path::String; custom = false)
     toml_path = dirname(file_path)
     toml_path = joinpath(toml_path, "input.toml")
     if isfile(toml_path)
         toml_data = TOML.parsefile(toml_path)
         num_keys = length(keys(toml_data["MESHES"]))
-        for key in keys(toml_data["MESHES"])
-            println(key)
+        if custom == true
+            mesh_name = name
+        else
+            mesh_name = "Mesh_" * string(num_keys)
         end
-        mesh_name = "Mesh_" * string(num_keys)
         toml_data["MESHES"][mesh_name] = dict
         toml_data["MESHES"][mesh_name]["path"] = file_path
         open(toml_path, "w") do file
             TOML.print(file, toml_data)
-        end
-        for key in keys(toml_data["MESHES"])
-            println(key)
         end
     else
         toml_data = Dict(name => dict)
@@ -106,7 +104,7 @@ function create_toml_data(name:: String, dict::Dict, file_path::String)
 end
 
 """
-    neper_julia_tess(base_name::String, parent_folder::String, tesselation:: Dict)
+    tesselate(base_name::String, parent_folder::String, tesselation:: Dict)
 
 Args:
     base_name (String): Name of the tesselation and orientation file
@@ -116,7 +114,7 @@ Args:
 Returns: 
     Creates a tesselation with the respective orientation file according to the tesselation parameters
 """
-function neper_julia_tess(;
+function tesselate(;
     base_name = "crystal",
     parent_folder = pwd(),  
     tesselation = Dict())
@@ -134,8 +132,9 @@ function neper_julia_tess(;
     return relative_file_path
 end
 
+
 """
-    neper_julia_mesh(base_name::String, parent_folder::String, tesselation::Dict, meshing::Dict)
+    mesh(base_name::String, parent_folder::String, tesselation::Dict, meshing::Dict)
 
 Args:
     base_name (String): Name of the tesselation and orientation file
@@ -146,7 +145,7 @@ Args:
 Returns:
     Creates a mesh according to the meshing parameters for the tesselation specified in the tesselation parameters
 """
-function neper_julia_mesh(;
+function mesh(;
     tess_name = Nothing,
     meshing = Dict(),
     custom_mesh_name = Nothing)
@@ -156,23 +155,27 @@ function neper_julia_mesh(;
     meshing_settings = merge(meshing_defaults, meshing)
 
     dir_name = dirname(tess_name)
-    mesh_path = generate_directory_name(dir_name, meshing_settings) * ".msh"
 
+    if custom_mesh_name !== Nothing
+        mesh_path = joinpath(dir_name, custom_mesh_name) * ".msh"
+    else
+        mesh_path = generate_directory_name(dir_name, meshing_settings) * ".msh"
+    end
+    
     mesh_path = get_unique_path(mesh_path)
     if custom_mesh_name !== Nothing
-        create_toml_data(custom_mesh_name, meshing_settings, mesh_path)
+        custom_mesh_name = basename(mesh_path)
+        create_toml_data(custom_mesh_name, meshing_settings, mesh_path, custom = true)
     else
         create_toml_data(mesh_path, meshing_settings, mesh_path)
     end
-    
-    
 
     run(`neper -M $tess_name $(create_cmdargs(meshing_settings)) -o $mesh_path -format msh,inp`)
     return mesh_path
 end
 
 function get_unique_path(base_path::AbstractString)
-    println(base_path)
+
     if !isfile(base_path)
         return base_path  
     end
@@ -210,15 +213,14 @@ function visualize_directory(;
     if length(matching_directories) == 0
         files_dir = readdir(directory_path)
         if "input.toml" in files_dir
-            NeperStructureGenerator.neper_julia_visualize_tess(tess = directory_path)
-            NeperStructureGenerator.neper_julia_visualize_mesh(mesh_dir = directory_path, visualize_all = true)
+            NeperStructureGenerator.visualize_tesselation(tess = directory_path)
+            NeperStructureGenerator.visualize_mesh(mesh_dir = directory_path, visualize_all = true)
         end
     # CASE 2: No directory was given, therefore pwd() is the directory‚ 
     else
         for dir in matching_directories
-            println(dir)
-            NeperStructureGenerator.neper_julia_visualize_tess(tess = dir)
-            NeperStructureGenerator.neper_julia_visualize_mesh(mesh_dir = dir, visualize_all = true)
+            NeperStructureGenerator.visualize_tesselation(tess = dir)
+            NeperStructureGenerator.visualize_mesh(mesh_dir = dir, visualize_all = true)
         
         end
     end
@@ -234,7 +236,7 @@ Args:
 Returns:
     Creates a visualization of the tesselation
 """
-function neper_julia_visualize_tess(;
+function visualize_tesselation(;
     tess = Nothing)
     tess_file = Nothing
     if tess === Nothing 
@@ -269,7 +271,7 @@ or give mesh path directly
 
 mesh_dir: path to directory containing meshes 
 """
-function neper_julia_visualize_mesh(;
+function visualize_mesh(;
     mesh_dir = Nothing,
     mesh_name = Nothing,
     mesh_file = Nothing,
