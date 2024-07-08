@@ -146,15 +146,15 @@ Returns:
     Creates a mesh according to the meshing parameters for the tesselation specified in the tesselation parameters
 """
 function mesh(;
-    tess_name = Nothing,
+    tess_path = Nothing,
     meshing = Dict(),
     custom_mesh_name = Nothing)
 
-    isfile(tess_name)||error("Tesselation file $(tess_name) does not exist.")
+    isfile(tess_path)||error("Tesselation file $(tess_path) does not exist.")
 
     meshing_settings = merge(meshing_defaults, meshing)
 
-    dir_name = dirname(tess_name)
+    dir_name = dirname(tess_path)
 
     if custom_mesh_name !== Nothing
         mesh_path = joinpath(dir_name, custom_mesh_name) * ".msh"
@@ -165,12 +165,13 @@ function mesh(;
     mesh_path = get_unique_path(mesh_path)
     if custom_mesh_name !== Nothing
         custom_mesh_name = basename(mesh_path)
+        custom_mesh_name, ext = splitext(custom_mesh_name)
         create_toml_data(custom_mesh_name, meshing_settings, mesh_path, custom = true)
     else
         create_toml_data(mesh_path, meshing_settings, mesh_path)
     end
 
-    run(`neper -M $tess_name $(create_cmdargs(meshing_settings)) -o $mesh_path -format msh,inp`)
+    run(`neper -M $tess_path $(create_cmdargs(meshing_settings)) -o $mesh_path -format msh,inp`)
     return mesh_path
 end
 
@@ -213,13 +214,13 @@ function visualize_directory(;
     if length(matching_directories) == 0
         files_dir = readdir(directory_path)
         if "input.toml" in files_dir
-            NeperStructureGenerator.visualize_tesselation(tess = directory_path)
+            NeperStructureGenerator.visualize_tesselation(tess_path = directory_path)
             NeperStructureGenerator.visualize_mesh(mesh_dir = directory_path, visualize_all = true)
         end
     # CASE 2: No directory was given, therefore pwd() is the directory‚ 
     else
         for dir in matching_directories
-            NeperStructureGenerator.visualize_tesselation(tess = dir)
+            NeperStructureGenerator.visualize_tesselation(tess_path = dir)
             NeperStructureGenerator.visualize_mesh(mesh_dir = dir, visualize_all = true)
         
         end
@@ -237,21 +238,21 @@ Returns:
     Creates a visualization of the tesselation
 """
 function visualize_tesselation(;
-    tess = Nothing)
+    tess_path = Nothing)
     tess_file = Nothing
-    if tess === Nothing 
+    if tess_path === Nothing 
         error("No tesselation provided.")
     end
-    if isdir(tess)
-        tessfiles = readdir(tess)
+    if isdir(tess_path)
+        tessfiles = readdir(tess_path)
         tess_file = filter(file -> endswith(file, ".tess"), tessfiles)
         if length(tess_file) != 1
             error("More than one tesselation file in the given directory")
         else
-            tess_file = joinpath(tess, tess_file[1])
+            tess_file = joinpath(tess_path, tess_file[1])
         end
-    elseif isfile(tess)
-        tess_file = tess
+    elseif isfile(tess_path)
+        tess_file = tess_path
     else
         error("Tesselation file does not exist.")
     end
