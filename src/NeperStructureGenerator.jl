@@ -1,5 +1,6 @@
 module NeperStructureGenerator
 
+
 using TOML 
 using Base.Filesystem
 
@@ -196,6 +197,8 @@ end
 
 function visualize_directory(;
     directory_path = pwd())
+ # basically two line function
+    
 
     # search for directories 
     directories = filter(isdir, readdir(directory_path))
@@ -263,15 +266,14 @@ function visualize_tesselation(;
     # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
     
     run(`neper -V $tess_file -print $file_name`)
-    end
 end
 
-"""
-give dir with mesh name (toml)
-or give mesh path directly
+# """
+# give dir with mesh name (toml)
+# or give mesh path directly
 
-mesh_dir: path to directory containing meshes 
-"""
+# mesh_dir: path to directory containing meshes 
+# """
 function visualize_mesh(;
     mesh_dir = Nothing,
     mesh_name = Nothing,
@@ -344,7 +346,7 @@ function visualize_mesh(;
     end
 
     # CASE 2: Mesh file path given -> visualize that specific mesh
-    toml_path= Nothing
+    toml_path = Nothing
     if mesh_file !== Nothing
 
         # find toml file in directory of given file
@@ -372,6 +374,8 @@ function visualize_mesh(;
         # If the part that is commented out is included, the files are stored in the respective folders instead of pwd()
         run(`neper -V $tess_path,$mesh_file -print $file_name`)
     end
+end
+
 end
 
 
