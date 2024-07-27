@@ -254,41 +254,11 @@ function get_unique_path(base_path::AbstractString)
     end
 end
 
-function visualize_directory(args...)
-  #  visualize_tesselation(args...) good way to forward arguments
- # basically two line function
-    
-
-    # search for directories 
-    directories = filter(isdir, readdir(directory_path))
-
-    # filter directories with input.toml file
-    matching_directories = String[]
-    for dir in directories
-        input_toml_path = joinpath(directory_path, dir, "input.toml")
-        if isfile(input_toml_path)
-            push!(matching_directories, joinpath(directory_path, dir))
-        end
-    end
-
-    # visualize the contents
-    # CASE 1: Directory was given
-    if length(matching_directories) == 0
-        files_dir = readdir(directory_path)
-        if "input.toml" in files_dir
-            NeperStructureGenerator.visualize_tesselation(tess_path = directory_path)
-            NeperStructureGenerator.visualize_mesh(mesh_dir = directory_path, visualize_all = true)
-        end
-    # CASE 2: No directory was given, therefore pwd() is the directory‚ 
-    else
-        for dir in matching_directories
-            NeperStructureGenerator.visualize_tesselation(tess_path = dir)
-            NeperStructureGenerator.visualize_mesh(mesh_dir = dir, visualize_all = true)
-        
-        end
-    end
+function visualize_directory_exp(;output_dir = Nothing,
+                                  visualization_dir = Nothing)
+    NeperStructureGenerator.visualize_tesselation(tess_dir = visualization_dir, output_dir = output_dir)
+    NeperStructureGenerator.visualize_mesh(mesh_dir = visualization_dir, output_dir = output_dir)
 end
-
 
 """
     neper_julia_visualize(tess::String)
@@ -300,9 +270,11 @@ Returns:
     Creates a visualization of the tesselation
 """
 
-function visualize_tesselation_exp(;
+function visualize_tesselation(;
     output_dir = Nothing,
     tess_dir = Nothing)
+
+    tess_dir = dirname(tess_dir)
     isdir(output_dir) || mkdir(output_dir)
     tess_file = Nothing
     tessfiles = readdir(tess_dir)
@@ -320,7 +292,7 @@ function visualize_tesselation_exp(;
     run(`neper -V $tess_file -print $file_name`)
 end
 
-function visualize_mesh_exp(;
+function visualize_mesh(;
     mesh_dir = Nothing,
     output_dir = Nothing,
     mesh_name = Nothing)
