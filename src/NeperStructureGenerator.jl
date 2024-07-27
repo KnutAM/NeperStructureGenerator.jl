@@ -254,10 +254,9 @@ function get_unique_path(base_path::AbstractString)
     end
 end
 
-function visualize_directory_exp(;output_dir = Nothing,
-                                  visualization_dir = Nothing)
-    NeperStructureGenerator.visualize_tesselation(tess_dir = visualization_dir, output_dir = output_dir)
-    NeperStructureGenerator.visualize_mesh(mesh_dir = visualization_dir, output_dir = output_dir)
+function visualize_directory_exp(output_dir, visualization_dir)
+    NeperStructureGenerator.visualize_tesselation(output_dir, visualization_dir)
+    NeperStructureGenerator.visualize_mesh(output_dir, visualization_dir)
 end
 
 """
@@ -270,9 +269,7 @@ Returns:
     Creates a visualization of the tesselation
 """
 
-function visualize_tesselation(;
-    output_dir = Nothing,
-    tess_dir = Nothing)
+function visualize_tesselation(output_dir, tess_dir)
 
     tess_dir = dirname(tess_dir)
     isdir(output_dir) || mkdir(output_dir)
@@ -292,10 +289,7 @@ function visualize_tesselation(;
     run(`neper -V $tess_file -print $file_name`)
 end
 
-function visualize_mesh(;
-    mesh_dir = Nothing,
-    output_dir = Nothing,
-    mesh_name = Nothing)
+function visualize_mesh(output_dir, mesh_dir; mesh_name = Nothing)
 
     mesh_dir = dirname(mesh_dir)
     isdir(output_dir) || mkdir(output_dir)
