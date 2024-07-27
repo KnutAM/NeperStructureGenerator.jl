@@ -105,7 +105,7 @@ function create_toml_data(name:: String, dict::Dict, file_path::String; custom =
     end
 end
 
-function check_mesh_args(file_path, new_mesh_dict)
+function check_mesh_args(file_path, new_mesh_dict, force)
     mesh_name = basename(file_path)
     mesh_name, ext = splitext(mesh_name)
     toml_path = dirname(file_path)
@@ -122,12 +122,28 @@ function check_mesh_args(file_path, new_mesh_dict)
             if check_dicts_equal(mesh_dict, new_mesh_dict)
                 same_args = true
             end
-            if same_name && same_args
-                error("The requested mesh already exists ('$key') with the same name and arguments for this tesselation.")
-            elseif !same_name && same_args
-                error("The requested mesh already exists under a different name ('$key') with the same arguments for this tesselation.")
-            elseif same_name && !same_args
-                error("A mesh with the same custom mesh name already exists ('$key') with different arguments.")
+            if !force
+                if same_name && same_args
+                    error("""\nThe requested mesh already exists ('$key') with the same name and arguments for this tesselation.
+                    Choose a unique mesh name or set force to true to overwrite the exisiting mesh.\n""")
+                elseif !same_name && same_args
+                    error("""\nThe requested mesh already exists under a different name ('$key') with the same arguments for this tesselation.
+                    Set force to true to still create the mesh.\n""")
+                elseif same_name && !same_args
+                    error("""\nA mesh with the same custom mesh name ('$key'), but different arguments already exists.
+                    Choose a unique mesh name or set force to true to overwrite the existing mesh.\n""")
+                end
+            else
+                if same_name && same_args
+                    println("""\nWARNING: The requested mesh already exists ('$key') with the same name and arguments for this tesselation.
+                    Overwriting existing mesh because force is set to true.\n""")
+                elseif !same_name && same_args
+                    println("""\nWARNING: The requested mesh already exists under a different name ('$key') with the same arguments for this tesselation.
+                    Still creating the mesh because force is set to true.\n""")
+                elseif same_name && !same_args
+                    println("""\nWARNING: A mesh with the same custom mesh name ('$key'), but different arguments already exists.
+                    Overwriting existing mesh because force is set to true.\n""")
+                end
             end
         end
     else
@@ -196,7 +212,8 @@ Returns:
 function mesh(;
     tess_path = Nothing,
     meshing = Dict(),
-    custom_mesh_name = Nothing)
+    custom_mesh_name = Nothing,
+    force = false)
 
     isfile(tess_path)||error("Tesselation file $(tess_path) does not exist.")
 
@@ -205,11 +222,11 @@ function mesh(;
 
     if custom_mesh_name !== Nothing
         mesh_path = joinpath(dir_name, custom_mesh_name) * ".msh"
-        check_mesh_args(mesh_path, meshing_settings)
+        check_mesh_args(mesh_path, meshing_settings, force)
         create_toml_data(mesh_path, meshing_settings, mesh_path, custom = true)
     else
         mesh_path = generate_directory_name(dir_name, meshing_settings) * ".msh"
-        check_mesh_args(mesh_path, meshing_settings)
+        check_mesh_args(mesh_path, meshing_settings, force)
         create_toml_data(mesh_path, meshing_settings, mesh_path)
     end
 
