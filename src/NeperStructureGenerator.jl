@@ -80,6 +80,7 @@ Returns:
 """
 function create_toml_data(name:: String, dict::Dict, file_path::String; custom = false)
     toml_path = dirname(file_path)
+    relative_file_path = basename(file_path)
     toml_path = joinpath(toml_path, "input.toml")
     if isfile(toml_path)
         toml_data = TOML.parsefile(toml_path)
@@ -91,13 +92,13 @@ function create_toml_data(name:: String, dict::Dict, file_path::String; custom =
             mesh_name = "Mesh_" * string(num_keys + 1)
         end
         toml_data["MESHES"][mesh_name] = dict
-        toml_data["MESHES"][mesh_name]["path"] = file_path
+        toml_data["MESHES"][mesh_name]["path"] = relative_file_path
         open(toml_path, "w") do file
             TOML.print(file, toml_data)
         end
     else
         toml_data = Dict(name => dict)
-        toml_data[name]["path"] = file_path
+        toml_data[name]["path"] = relative_file_path
         toml_data["MESHES"] = Dict()
         open(toml_path, "w") do file
             TOML.print(file, toml_data)
