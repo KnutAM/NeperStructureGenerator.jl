@@ -327,6 +327,26 @@ function visualize_tesselation(;
     run(`neper -V $tess_file -print $file_name`)
 end
 
+function visualize_tesselation_exp(;
+    output_dir = Nothing,
+    tess_dir = Nothing)
+    isdir(output_dir) || mkdir(output_dir)
+    tess_file = Nothing
+    tessfiles = readdir(tess_dir)
+    tess_file = filter(file -> endswith(file, ".tess"), tessfiles)
+    if length(tess_file) > 1
+        error("More than one tesselation file in the given directory")
+    elseif length(tess_file) == 0
+        error("No tesselation file in the given directory")
+    else
+        tess_file = joinpath(tess_dir, tess_file[1])
+    end
+    base_name_with_ext = basename(tess_file)
+    base_name, ext = splitext(base_name_with_ext)
+    file_name = joinpath(output_dir, base_name) #base_name
+    run(`neper -V $tess_file -print $file_name`)
+end
+
 # """
 # give dir with mesh name (toml)
 # or give mesh path directly
