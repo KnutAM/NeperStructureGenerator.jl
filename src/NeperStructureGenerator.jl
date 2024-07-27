@@ -104,6 +104,38 @@ function create_toml_data(name:: String, dict::Dict, file_path::String; custom =
     end
 end
 
+function check_mesh_args(file_path, new_mesh_dict)
+    toml_path = dirname(file_path)
+    toml_path = joinpath(toml_path, "input.toml")
+    if isfile(toml_path)
+        toml_data = TOML.parsefile(toml_path)
+        meshes = toml_data["MESHES"]
+        for(key, mesh_dict) in meshes
+            if check_dicts_equal(mesh_dict, new_mesh_dict)
+                error("Mesh (name: $key) with the same arguments already exists for this tesselation.")
+            end
+        end
+    else
+        error("The input.toml file does not exist.")
+    end
+end
+
+function check_dicts_equal(dict, new_dict)
+    """
+    dict: Existing dict ("Already has "path" key)
+    new_dict: New dict (Does not have "path" key yet)
+    """
+    for k in keys(new_dict)
+        if k == "path" # Comparison based on arguments, not the path
+            continue
+        end
+        if get(dict, k, nothing) != new_dict[k]
+            return false
+        end
+    end
+    return true
+end
+
 """
     tesselate(base_name::String, parent_folder::String, tesselation:: Dict)
 
@@ -154,7 +186,6 @@ function mesh(;
     isfile(tess_path)||error("Tesselation file $(tess_path) does not exist.")
 
     meshing_settings = merge(meshing_defaults, meshing)
-
     dir_name = dirname(tess_path)
 
     if custom_mesh_name !== Nothing
@@ -164,6 +195,7 @@ function mesh(;
     end
     
     mesh_path = get_unique_path(mesh_path)
+    check_mesh_args(mesh_path, meshing_settings)
     if custom_mesh_name !== Nothing
         custom_mesh_name = basename(mesh_path)
         custom_mesh_name, ext = splitext(custom_mesh_name)
@@ -195,8 +227,8 @@ function get_unique_path(base_path::AbstractString)
     end
 end
 
-function visualize_directory(;
-    directory_path = pwd())
+function visualize_directory(args...)
+  #  visualize_tesselation(args...) good way to forward arguments
  # basically two line function
     
 
