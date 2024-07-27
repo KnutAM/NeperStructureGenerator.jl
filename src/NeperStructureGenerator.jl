@@ -108,21 +108,26 @@ end
 function check_mesh_args(file_path, new_mesh_dict)
     mesh_name = basename(file_path)
     mesh_name, ext = splitext(mesh_name)
-
     toml_path = dirname(file_path)
     toml_path = joinpath(toml_path, "input.toml")
     if isfile(toml_path)
         toml_data = TOML.parsefile(toml_path)
         meshes = toml_data["MESHES"]
         for(key, mesh_dict) in meshes
-            println("key: $key")
-            println("mesh_name: $mesh_name")
-
+            same_name = false
+            same_args = false
             if key == mesh_name
-                error("Custom mesh name '$mesh_name' already exists for this tesselation, choose a unique one.")
+                same_name = true
             end
             if check_dicts_equal(mesh_dict, new_mesh_dict)
-                error("Mesh (name: $key) with the same arguments already exists for this tesselation.")
+                same_args = true
+            end
+            if same_name && same_args
+                error("The requested mesh already exists ('$key') with the same name and arguments for this tesselation.")
+            elseif !same_name && same_args
+                error("The requested mesh already exists under a different name ('$key') with the same arguments for this tesselation.")
+            elseif same_name && !same_args
+                error("A mesh with the same custom mesh name already exists ('$key') with different arguments.")
             end
         end
     else
