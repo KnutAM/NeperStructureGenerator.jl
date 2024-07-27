@@ -88,7 +88,7 @@ function create_toml_data(name:: String, dict::Dict, file_path::String; custom =
             mesh_name = basename(name)
             mesh_name, ext = splitext(mesh_name)
         else
-            mesh_name = "Mesh_" * string(num_keys)
+            mesh_name = "Mesh_" * string(num_keys + 1)
         end
         toml_data["MESHES"][mesh_name] = dict
         toml_data["MESHES"][mesh_name]["path"] = file_path
