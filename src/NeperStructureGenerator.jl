@@ -326,6 +326,7 @@ function visualize_mesh(;
         if haskey(meshes, mesh_name)
             mesh = meshes[mesh_name]
             mesh_path = mesh["path"]
+            mesh_path = joinpath(mesh_dir, mesh_path)
         else
             error("No mesh named $mesh_name in directory $mesh_dir")
         end
