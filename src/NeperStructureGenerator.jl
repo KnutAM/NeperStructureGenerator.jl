@@ -85,7 +85,8 @@ function create_toml_data(name:: String, dict::Dict, file_path::String; custom =
         toml_data = TOML.parsefile(toml_path)
         num_keys = length(keys(toml_data["MESHES"]))
         if custom == true
-            mesh_name = name
+            mesh_name = basename(name)
+            mesh_name, ext = splitext(mesh_name)
         else
             mesh_name = "Mesh_" * string(num_keys)
         end
@@ -105,12 +106,21 @@ function create_toml_data(name:: String, dict::Dict, file_path::String; custom =
 end
 
 function check_mesh_args(file_path, new_mesh_dict)
+    mesh_name = basename(file_path)
+    mesh_name, ext = splitext(mesh_name)
+
     toml_path = dirname(file_path)
     toml_path = joinpath(toml_path, "input.toml")
     if isfile(toml_path)
         toml_data = TOML.parsefile(toml_path)
         meshes = toml_data["MESHES"]
         for(key, mesh_dict) in meshes
+            println("key: $key")
+            println("mesh_name: $mesh_name")
+
+            if key == mesh_name
+                error("Custom mesh name '$mesh_name' already exists for this tesselation, choose a unique one.")
+            end
             if check_dicts_equal(mesh_dict, new_mesh_dict)
                 error("Mesh (name: $key) with the same arguments already exists for this tesselation.")
             end
@@ -190,17 +200,11 @@ function mesh(;
 
     if custom_mesh_name !== Nothing
         mesh_path = joinpath(dir_name, custom_mesh_name) * ".msh"
+        check_mesh_args(mesh_path, meshing_settings)
+        create_toml_data(mesh_path, meshing_settings, mesh_path, custom = true)
     else
         mesh_path = generate_directory_name(dir_name, meshing_settings) * ".msh"
-    end
-    
-    mesh_path = get_unique_path(mesh_path)
-    check_mesh_args(mesh_path, meshing_settings)
-    if custom_mesh_name !== Nothing
-        custom_mesh_name = basename(mesh_path)
-        custom_mesh_name, ext = splitext(custom_mesh_name)
-        create_toml_data(custom_mesh_name, meshing_settings, mesh_path, custom = true)
-    else
+        check_mesh_args(mesh_path, meshing_settings)
         create_toml_data(mesh_path, meshing_settings, mesh_path)
     end
 
@@ -209,7 +213,7 @@ function mesh(;
 end
 
 function get_unique_path(base_path::AbstractString)
-
+######## Depreceated
     if !isfile(base_path)
         return base_path  
     end
