@@ -24,9 +24,8 @@ const meshing_defaults = Dict(
     name_from_dict(d::Dict)
 
 Generate a string with the format `"<key1><value1>_<key2><value2>_..."` where
-the keys are sorted. 
+the keys are sorted.
 """
-
 function name_from_dict(d::Dict)
     formatted_entries = []
     for key in sort(collect(keys(d)))
@@ -69,16 +68,27 @@ function create_cmdargs(dict::Dict)
 end
 
 """
-    create_toml_data(name::String, dict::Dict)
+    create_toml_data(name::String, dict::Dict, file_path::String; custom::Bool = false)
 
-Args:
-    name (String): Path to the tesselation or mesh file, whose parameters are to be saved in the toml file
-    dict (Dict): Dictionary with the parameters of the tesselation or mesh
+Create or update a TOML file with mesh data.
 
-Returns:
-    Logs the parameters of each individual tesselation file and the respective mesh files
+If the `custom` flag is set to `true`, the `name` parameter is used as the mesh name. 
+Otherwise, a mesh name based on the number of existing entries is generated. 
+The function saves the tesselation information in the "TESSELATION" section and the 
+mesh information in the "MESHES" section of the TOML file. The TOML file is located in 
+the same directory as the provided `file_path`.
+
+# Arguments
+- `name::String`: Provides the name of the tesselation dictionary in the toml file for 
+   tesselation and the path to the mesh file to infer the name for meshing.
+- `dict::Dict`: Contains information about the tesselation or meshing parameters.
+- `file_path::String`: Path to the tesselation or mesh file.
+- `custom::Bool=false`: Is set to true if a custom mesh name was given.
 """
 function create_toml_data(name:: String, dict::Dict, file_path::String; custom = false)
+    println(name)
+    println(dict)
+    println(file_path)
     toml_path = dirname(file_path)
     relative_file_path = basename(file_path)
     toml_path = joinpath(toml_path, "input.toml")
@@ -106,7 +116,19 @@ function create_toml_data(name:: String, dict::Dict, file_path::String; custom =
     end
 end
 
-function check_mesh_args(file_path, new_mesh_dict, force)
+"""
+    check_mesh_args(file_path::String, new_mesh_dict::Dict, force::Bool = false)
+
+Check if there already is a mesh with the same name and or same arguments.
+
+If the `force` flag is set to `true`, overwriting of meshes is enabled.
+
+# Arguments
+- `file_path::String`: Path to the mesh file.
+- `new_mesh_dictdict::Dict`: Contains the parameters of the new mesh.
+- `force::Bool=false`: Enables and disables overwriting of meshes.
+"""
+function check_mesh_args(file_path::String, new_mesh_dict::Dict, force::Bool = false)
     mesh_name = basename(file_path)
     mesh_name, ext = splitext(mesh_name)
     toml_path = dirname(file_path)
@@ -125,24 +147,31 @@ function check_mesh_args(file_path, new_mesh_dict, force)
             end
             if !force
                 if same_name && same_args
-                    error("""\nThe requested mesh already exists ('$key') with the same name and arguments for this tesselation.
-                    Choose a unique mesh name or set force to true to overwrite the exisiting mesh.\n""")
+                    error("""\nThe requested mesh already exists ('$key') with the same 
+                    name and arguments for this tesselation. Choose a unique mesh name or 
+                    set force to true to overwrite the exisiting mesh.\n""")
                 elseif !same_name && same_args
-                    error("""\nThe requested mesh already exists under a different name ('$key') with the same arguments for this tesselation.
+                    error("""\nThe requested mesh already exists under a different name 
+                    ('$key') with the same arguments for this tesselation.
                     Set force to true to still create the mesh.\n""")
                 elseif same_name && !same_args
-                    error("""\nA mesh with the same custom mesh name ('$key'), but different arguments already exists.
-                    Choose a unique mesh name or set force to true to overwrite the existing mesh.\n""")
+                    error("""\nA mesh with the same custom mesh name ('$key'), but 
+                    different arguments already exists.
+                    Choose a unique mesh name or set force to true to overwrite the 
+                    existing mesh.\n""")
                 end
             else
                 if same_name && same_args
-                    println("""\nWARNING: The requested mesh already exists ('$key') with the same name and arguments for this tesselation.
+                    println("""\nWARNING: The requested mesh already exists ('$key') with 
+                    the same name and arguments for this tesselation.
                     Overwriting existing mesh because force is set to true.\n""")
                 elseif !same_name && same_args
-                    println("""\nWARNING: The requested mesh already exists under a different name ('$key') with the same arguments for this tesselation.
+                    println("""\nWARNING: The requested mesh already exists under a 
+                    different name ('$key') with the same arguments for this tesselation.
                     Still creating the mesh because force is set to true.\n""")
                 elseif same_name && !same_args
-                    println("""\nWARNING: A mesh with the same custom mesh name ('$key'), but different arguments already exists.
+                    println("""\nWARNING: A mesh with the same custom mesh name ('$key'), 
+                    but different arguments already exists.
                     Overwriting existing mesh because force is set to true.\n""")
                 end
             end
@@ -152,11 +181,13 @@ function check_mesh_args(file_path, new_mesh_dict, force)
     end
 end
 
-function check_dicts_equal(dict, new_dict)
-    """
-    dict: Existing dict ("Already has "path" key)
-    new_dict: New dict (Does not have "path" key yet)
-    """
+"""
+    check_dicts_equal(dict::Dict, new_dict::Dict)
+
+Returns `true` if the values of the keys in `new_dict` match the values of the keys 
+in `dict`
+"""
+function check_dicts_equal(dict::Dict, new_dict::Dict)
     for k in keys(new_dict)
         if k == "path" # Comparison based on arguments, not the path
             continue
@@ -169,20 +200,19 @@ function check_dicts_equal(dict, new_dict)
 end
 
 """
-    tesselate(base_name::String, parent_folder::String, tesselation:: Dict)
+    tesselate(; base_name::String = "crystal", parent_folder::String = pwd(), 
+                tesselation::Dict = Dict())
 
-Args:
-    base_name (String): Name of the tesselation and orientation file
-    parent_folder (String): Root directory
-    tesselation (Dict): Dictionary containg the tesselation parameters
+Creates a tesselation with the respective orientation file according to the tesselation 
+parameters. Returns the path to the created tesselation file.
 
-Returns: 
-    Creates a tesselation with the respective orientation file according to the tesselation parameters
+# Arguments
+- `base_name::String="crystal"`: Name of the tesselation and orientation file.
+- `parent_folder::String=pwd()`: Root directory.
+- `tesselation::Dict=Dict()`: Dictionary containg the tesselation parameters.
 """
-function tesselate(;
-    base_name = "crystal",
-    parent_folder = pwd(),  
-    tesselation = Dict())
+function tesselate(; base_name::String = "crystal", parent_folder::String = pwd(), 
+    tesselation::Dict = Dict())
 
     tesselation_settings = merge(tesselation_defaults, tesselation)
     dir_name = generate_directory_name(parent_folder, tesselation_settings)
@@ -199,22 +229,23 @@ end
 
 
 """
-    mesh(base_name::String, parent_folder::String, tesselation::Dict, meshing::Dict)
+    mesh(; tess_path::String = Nothing, meshing::Dict = Dict(), 
+    custom_mesh_name::String = Nothing, force::Bool = false)
 
-Args:
-    base_name (String): Name of the tesselation and orientation file
-    parent_folder (String): Root directory
-    tesselation (Dict): Dictionary containg the tesselation parameters
-    meshing (Dict): Dictionary containg the meshing parameters
+Creates and saves a mesh for the the provided tesselation file according to the meshing 
+parameters. Returns the path to the mesh file.
 
-Returns:
-    Creates a mesh according to the meshing parameters for the tesselation specified in the tesselation parameters
+If the `force` flag is set to `true`, overwriting of meshes is enabled. A custom mesh 
+name can be given in the `custom_mesh_name` argument.
+
+# Arguments
+- `tess_path::String=Nothing`: Path to the tesselation file.
+- `meshing::Dict=Dict()`: Dictionary containg the meshing parameters.
+- `custom_mesh_name::String=Nothing`: Custom given mesh name.
+- `force::Bool=false`: Enables and disables overwriting of meshes.
 """
-function mesh(;
-    tess_path = Nothing,
-    meshing = Dict(),
-    custom_mesh_name = Nothing,
-    force = false)
+function mesh(; tess_path::String = Nothing, meshing::Dict = Dict(), 
+    custom_mesh_name::String = Nothing, force::Bool = false)
 
     isfile(tess_path)||error("Tesselation file $(tess_path) does not exist.")
 
@@ -235,8 +266,8 @@ function mesh(;
     return mesh_path
 end
 
-function get_unique_path(base_path::AbstractString)
 ######## Depreceated
+function get_unique_path(base_path::AbstractString)
     if !isfile(base_path)
         return base_path  
     end
@@ -254,22 +285,25 @@ function get_unique_path(base_path::AbstractString)
     end
 end
 
-function visualize_directory_exp(output_dir, visualization_dir)
+
+"""
+    visualize_directory(output_dir::String, visualization_dir::String)
+
+Creates visualizations for the tesselation and all meshes within the `visualization_dir` 
+directory and saves it to the `output_dir` directory.
+"""
+function visualize_directory(output_dir::String, visualization_dir::String)
     NeperStructureGenerator.visualize_tesselation(output_dir, visualization_dir)
     NeperStructureGenerator.visualize_mesh(output_dir, visualization_dir)
 end
 
 """
-    neper_julia_visualize(tess::String)
+    visualize_tesselation(output_dir::String, tess_dir::String)
 
-Args:
-    tess: path to tesselation file or directory containing tesselation
-
-Returns:
-    Creates a visualization of the tesselation
+Creates a visualizations for the tesselation in the `tess_dir` directory and saves it to 
+the `output_dir` directory.
 """
-
-function visualize_tesselation(output_dir, tess_dir)
+function visualize_tesselation(output_dir::String, tess_dir::String)
 
     tess_dir = dirname(tess_dir)
     isdir(output_dir) || mkdir(output_dir)
@@ -289,7 +323,17 @@ function visualize_tesselation(output_dir, tess_dir)
     run(`neper -V $tess_file -print $file_name`)
 end
 
-function visualize_mesh(output_dir, mesh_dir; mesh_name = Nothing)
+"""
+    visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::String = Nothing)
+
+
+Creates a visualizations for all meshes in the `mesh_dir` directory and saves it to 
+the `output_dir` directory.
+
+In order to only visualize a certain mesh within the `mesh_dir` directory, specify a 
+`mesh_name`.
+"""
+function visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::String = Nothing)
 
     mesh_dir = dirname(mesh_dir)
     isdir(output_dir) || mkdir(output_dir)
