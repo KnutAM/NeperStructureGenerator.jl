@@ -85,10 +85,7 @@ the same directory as the provided `file_path`.
 - `file_path::String`: Path to the tesselation or mesh file.
 - `custom::Bool=false`: Is set to true if a custom mesh name was given.
 """
-function create_toml_data(name:: String, dict::Dict, file_path::String; custom = false)
-    println(name)
-    println(dict)
-    println(file_path)
+function create_toml_data(name:: String, dict::Dict, file_path::String; custom::Bool = false)
     toml_path = dirname(file_path)
     relative_file_path = basename(file_path)
     toml_path = joinpath(toml_path, "input.toml")
@@ -244,15 +241,15 @@ name can be given in the `custom_mesh_name` argument.
 - `custom_mesh_name::String=Nothing`: Custom given mesh name.
 - `force::Bool=false`: Enables and disables overwriting of meshes.
 """
-function mesh(; tess_path::String = Nothing, meshing::Dict = Dict(), 
-    custom_mesh_name::String = Nothing, force::Bool = false)
+function mesh(; tess_path::Union{String, Nothing} = nothing, meshing::Dict = Dict(), 
+    custom_mesh_name::Union{String, Nothing} = nothing, force::Bool = false)
 
     isfile(tess_path)||error("Tesselation file $(tess_path) does not exist.")
 
     meshing_settings = merge(meshing_defaults, meshing)
     dir_name = dirname(tess_path)
 
-    if custom_mesh_name !== Nothing
+    if custom_mesh_name !== nothing
         mesh_path = joinpath(dir_name, custom_mesh_name) * ".msh"
         check_mesh_args(mesh_path, meshing_settings, force)
         create_toml_data(mesh_path, meshing_settings, mesh_path, custom = true)
@@ -333,7 +330,7 @@ the `output_dir` directory.
 In order to only visualize a certain mesh within the `mesh_dir` directory, specify a 
 `mesh_name`.
 """
-function visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::String = Nothing)
+function visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::Union{String, Nothing} = nothing)
 
     mesh_dir = dirname(mesh_dir)
     isdir(output_dir) || mkdir(output_dir)
@@ -360,7 +357,7 @@ function visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::String 
     else
         error("Tesselation file does not exist.")
     end
-    if mesh_name !== Nothing
+    if mesh_name !== nothing
         if haskey(meshes, mesh_name)
             mesh = meshes[mesh_name]
             mesh_path = mesh["path"]
