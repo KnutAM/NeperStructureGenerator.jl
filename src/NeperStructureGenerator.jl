@@ -148,9 +148,8 @@ function check_mesh_args(file_path::String, new_mesh_dict::Dict, force::Bool = f
                     name and arguments for this tesselation. Choose a unique mesh name or 
                     set force to true to overwrite the exisiting mesh.\n""")
                 elseif !same_name && same_args
-                    error("""\nThe requested mesh already exists under a different name 
-                    ('$key') with the same arguments for this tesselation.
-                    Set force to true to still create the mesh.\n""")
+                    println("""\nWARNING: The requested mesh already exists under a different name 
+                    ('$key') with the same arguments for this tesselation.\n""")
                 elseif same_name && !same_args
                     error("""\nA mesh with the same custom mesh name ('$key'), but 
                     different arguments already exists.
@@ -159,17 +158,11 @@ function check_mesh_args(file_path::String, new_mesh_dict::Dict, force::Bool = f
                 end
             else
                 if same_name && same_args
-                    println("""\nWARNING: The requested mesh already exists ('$key') with 
-                    the same name and arguments for this tesselation.
-                    Overwriting existing mesh because force is set to true.\n""")
+                    println("""\nWARNING: Overwriting existing mesh '$key' because force is set to true.\n""")
                 elseif !same_name && same_args
-                    println("""\nWARNING: The requested mesh already exists under a 
-                    different name ('$key') with the same arguments for this tesselation.
-                    Still creating the mesh because force is set to true.\n""")
+                    println("""\nWARNING: The requested mesh already exists under a different name: '$key'.\n""")
                 elseif same_name && !same_args
-                    println("""\nWARNING: A mesh with the same custom mesh name ('$key'), 
-                    but different arguments already exists.
-                    Overwriting existing mesh because force is set to true.\n""")
+                    println("""\nWARNING: Overwriting existing mesh '$key' because force is set to true.\n""")
                 end
             end
         end
@@ -219,8 +212,8 @@ function tesselate(; base_name::String = "crystal", parent_folder::String = pwd(
     relative_file_path = relpath(file_name, parent_folder) * ".tess"
     args=create_cmdargs(tesselation_settings)
     create_toml_data("TESSELATION", tesselation_settings, relative_file_path)
-    run(`neper -T $args -o $relative_file_path -format tess,ori -oridescriptor rodrigues:active`)
 
+    run(`neper -T $args -o $relative_file_path -format tess,ori -oridescriptor rodrigues:active`)
     return relative_file_path
 end
 
@@ -290,19 +283,29 @@ Creates visualizations for the tesselation and all meshes within the `visualizat
 directory and saves it to the `output_dir` directory.
 """
 function visualize_directory(output_dir::String, visualization_dir::String)
+    isdir(visualization_dir) || error("File path given, but expected directory.")
     NeperStructureGenerator.visualize_tesselation(output_dir, visualization_dir)
-    NeperStructureGenerator.visualize_mesh(output_dir, visualization_dir)
+    NeperStructureGenerator.visualize_mesh(output_dir, visualization_dir, all = true)
 end
 
 """
-    visualize_tesselation(output_dir::String, tess_dir::String)
+    visualize_tesselation(output_dir::String, tess_path::String)
 
-Creates a visualizations for the tesselation in the `tess_dir` directory and saves it to 
+Creates a visualizations for the specified tesselation and saves it to 
 the `output_dir` directory.
-"""
-function visualize_tesselation(output_dir::String, tess_dir::String)
 
-    tess_dir = dirname(tess_dir)
+# Arguments
+- `output_dir::String`: Path to directory for saving visualizations.
+- `tess_path::String`: Path to the tesselation file or directory containing the tesselation.
+"""
+function visualize_tesselation(output_dir::String, tess_path::String)
+
+    if isdir(tess_path)
+        tess_dir = tess_path
+    else
+        tess_dir = dirname(tess_path)
+    end
+    println(tess_dir)
     isdir(output_dir) || mkdir(output_dir)
     tess_file = Nothing
     tessfiles = readdir(tess_dir)
@@ -316,23 +319,35 @@ function visualize_tesselation(output_dir::String, tess_dir::String)
     end
     base_name_with_ext = basename(tess_file)
     base_name, ext = splitext(base_name_with_ext)
-    file_name = joinpath(output_dir, base_name) #base_name
+    file_name = joinpath(output_dir, base_name)
+
     run(`neper -V $tess_file -print $file_name`)
 end
 
 """
-    visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::String = Nothing)
+    visualize_mesh(output_dir::String, mesh_path::String; mesh_name::String = Nothing)
 
-
-Creates a visualizations for all meshes in the `mesh_dir` directory and saves it to 
+Creates a visualization for the specified mesh and saves it to 
 the `output_dir` directory.
 
-In order to only visualize a certain mesh within the `mesh_dir` directory, specify a 
-`mesh_name`.
-"""
-function visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::Union{String, Nothing} = nothing)
+Provide a path to a mesh file or a tesselation directory and a mesh name in order to visualize a mesh.
 
-    mesh_dir = dirname(mesh_dir)
+# Arguments
+- `output_dir::String`: Path to directory for saving visualizations.
+- `mesh_path::String`: Path to the mesh file or directory containing the mesh.
+- `mesh_name::String`: Name of the mesh to visualize, if `mesh_path` is a directory.
+- `all::Bool=false`: Non public argument if all meshes should be visualized.
+"""
+function visualize_mesh(output_dir::String, mesh_path::String; mesh_name::Union{String, Nothing} = nothing, all::Bool=false)
+
+    if isdir(mesh_path)
+        mesh_dir = mesh_path
+        if mesh_name === nothing && all === false
+            error("Mesh name is missing.")
+        end
+    else
+        mesh_dir = dirname(mesh_path)
+    end
     isdir(output_dir) || mkdir(output_dir)
 
     # find toml file
@@ -357,7 +372,7 @@ function visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::Union{S
     else
         error("Tesselation file does not exist.")
     end
-    if mesh_name !== nothing
+    if mesh_name !== nothing && all === false
         if haskey(meshes, mesh_name)
             mesh = meshes[mesh_name]
             mesh_path = mesh["path"]
@@ -370,17 +385,24 @@ function visualize_mesh(output_dir::String, mesh_dir::String; mesh_name::Union{S
         file_name = joinpath(output_dir, base_name)
 
         run(`neper -V $tess_path,$mesh_path -print $file_name`)
-    else
+    elseif mesh_name === nothing && all === false
+        base_name_with_ext = basename(mesh_path)
+        base_name, ext = splitext(base_name_with_ext)
+        file_name = joinpath(output_dir, base_name)
+
+        run(`neper -V $tess_path,$mesh_path -print $file_name`)
+    end
+    if all
         for (key, dict) in meshes
             mesh_path = dict["path"]
             mesh_path = joinpath(mesh_dir, mesh_path)
             base_name_with_ext = basename(mesh_path)
             base_name, ext = splitext(base_name_with_ext)
             file_name = joinpath(output_dir, base_name)
+
             run(`neper -V $tess_path,$mesh_path -print $file_name`)
         end
     end
-
 end
 
 end
