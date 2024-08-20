@@ -52,6 +52,20 @@ function generate_directory_name(parent_folder, tesselation_settings::Dict)
 end
 
 """
+    generate_mesh_name(parent_folder::String)
+
+    Counts the number of existing meshes, thereby creating a mesh name if no custom one was given.
+"""
+function generate_mesh_name(parent_folder)
+    toml_path = joinpath(parent_folder, "input.toml")
+    toml_data = TOML.parsefile(toml_path)
+    num_keys = length(keys(toml_data["MESHES"]))
+    mesh_name = "Mesh_" * string(num_keys + 1)
+
+    return mesh_name
+end
+
+"""
     create_cmdargs(dict::Dict)
 
 Create a string with the format `"-<key1> <value1> -<key2> <value2> ..."`.
@@ -247,7 +261,8 @@ function mesh(; tess_path::Union{String, Nothing} = nothing, meshing::Dict = Dic
         check_mesh_args(mesh_path, meshing_settings, force)
         create_toml_data(mesh_path, meshing_settings, mesh_path, custom = true)
     else
-        mesh_path = generate_directory_name(dir_name, meshing_settings) * ".msh"
+        mesh_name = generate_mesh_name(dir_name) * ".msh"
+        mesh_path = joinpath(dir_name, mesh_name)
         check_mesh_args(mesh_path, meshing_settings, force)
         create_toml_data(mesh_path, meshing_settings, mesh_path)
     end
