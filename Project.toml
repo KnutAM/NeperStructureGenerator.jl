@@ -5,6 +5,7 @@ version = "0.1.0"
 
 [deps]
 TOML = "fa267f1f-6049-4f14-aa54-33bafae1ed76"
+neper_jll = "258f42f6-ca5a-5cac-81eb-6d63eea71a0c"
 
 [compat]
 julia = "1.8"
