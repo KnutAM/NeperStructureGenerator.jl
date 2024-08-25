@@ -47,7 +47,7 @@ jobs:
         if: matrix.os == 'macOS-latest'
         run: |
           brew update
-          brew install git cmake gsl
+          brew install git cmake gsl libomp
           git clone https://github.com/neperfepx/neper.git
           cd neper/src
           mkdir build
