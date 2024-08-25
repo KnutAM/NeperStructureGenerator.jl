@@ -60,7 +60,7 @@ jobs:
         if: matrix.os == 'macOS-latest'
         run: |
           brew update
-          brew install git cmake gsl libomp llvm
+          brew install git cmake gsl libomp 
           export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
           export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
           git clone https://github.com/neperfepx/neper.git
