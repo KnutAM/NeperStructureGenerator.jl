@@ -58,7 +58,7 @@ jobs:
           brew update
           brew install git cmake gsl libomp  llvm
 
-          OPTION (USE_OpenMP "Use OpenMP to enable <omp.h>" ON)
+         
 
           set(CMAKE_C_COMPILER "/usr/local/Cellar/llvm/5.0.1/bin/clang")
           set(CMAKE_CXX_COMPILER "/usr/local/Cellar/llvm/5.0.1/bin/clang++")
