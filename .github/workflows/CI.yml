@@ -36,6 +36,19 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
+
+      - name: Install Neper on Ubuntu
+        if: matrix.os == 'ubuntu-latest'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y neper
+
+      - name: Install Neper on macOS
+        if: matrix.os == 'macOS-latest'
+        run: |
+          brew update
+          brew install neper
+          
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
       - uses: julia-actions/julia-runtest@v1
