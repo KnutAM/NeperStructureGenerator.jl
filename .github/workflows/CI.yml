@@ -41,7 +41,14 @@ jobs:
         if: matrix.os == 'ubuntu-latest'
         run: |
           sudo apt-get update
-          sudo apt-get install -y neper
+          sudo apt-get install -y git cmake build-essential gsl-bin libgsl-dev libomp-dev
+          git clone https://github.com/neperfepx/neper.git
+          cd neper/src
+          mkdir build
+          cd build
+          cmake -DOpenMP_C_FLAGS="-fopenmp" -DOpenMP_C_LIB_NAMES="omp" ..
+          make
+          sudo make install
 
       - name: Install Neper on macOS
         if: matrix.os == 'macOS-latest'
