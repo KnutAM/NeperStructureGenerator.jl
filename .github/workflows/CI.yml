@@ -38,10 +38,12 @@ jobs:
           arch: ${{ matrix.arch }}
       - name: Configure environment variables
         run: |
-          echo "CC=/usr/local/opt/llvm/bin/clang" >> $GITHUB_ENV
-          echo "CXX=/usr/local/opt/llvm/bin/clang++" >> $GITHUB_ENV
-          echo "LDFLAGS=-L/usr/local/opt/llvm/lib" >> $GITHUB_ENV
-          echo "CPPFLAGS=-I/usr/local/opt/llvm/include" >> $GITHUB_ENV
+          LLVM_PREFIX=$(brew --prefix llvm)
+          echo "CC=${LLVM_PREFIX}/bin/clang" >> $GITHUB_ENV
+          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
+          echo "LDFLAGS=-L${LLVM_PREFIX}/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I${LLVM_PREFIX}/include" >> $GITHUB_ENV
+
 
       - name: Install Neper on Ubuntu
         if: matrix.os == 'ubuntu-latest'
