@@ -36,13 +36,7 @@ jobs:
         with:
           version: ${{ matrix.version }}
           arch: ${{ matrix.arch }}
-      - name: Configure environment variables
-        run: |
-          LLVM_PREFIX=$(brew --prefix llvm)
-          echo "CC=${LLVM_PREFIX}/bin/clang" >> $GITHUB_ENV
-          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
-          echo "LDFLAGS=-L${LLVM_PREFIX}/lib" >> $GITHUB_ENV
-          echo "CPPFLAGS=-I${LLVM_PREFIX}/include" >> $GITHUB_ENV
+
 
 
       - name: Install Neper on Ubuntu
@@ -62,9 +56,13 @@ jobs:
         if: matrix.os == 'macOS-latest'
         run: |
           brew update
-          brew install git cmake gsl libomp 
-          export LDFLAGS="-L/opt/homebrew/opt/libomp/lib"
-          export CPPFLAGS="-I/opt/homebrew/opt/libomp/include"
+          brew install git cmake gsl libomp  llvm
+          LLVM_PREFIX=$(brew --prefix llvm)
+          echo "CC=${LLVM_PREFIX}/bin/clang" >> $GITHUB_ENV
+          echo "CXX=${LLVM_PREFIX}/bin/clang++" >> $GITHUB_ENV
+          echo "LDFLAGS=-L${LLVM_PREFIX}/lib" >> $GITHUB_ENV
+          echo "CPPFLAGS=-I${LLVM_PREFIX}/include" >> $GITHUB_ENV
+          
           git clone https://github.com/neperfepx/neper.git
           cd neper/src
           
