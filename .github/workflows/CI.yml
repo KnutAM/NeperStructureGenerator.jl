@@ -47,7 +47,21 @@ jobs:
         if: matrix.os == 'macOS-latest'
         run: |
           brew update
-          brew install neper
+          brew install git
+          git clone https://github.com/neperfepx/neper.git
+          cd neper
+          ./configure
+          make
+          sudo make install
+
+
+      - name: Install Neper on Windows
+        if: matrix.os == 'windows-latest'
+        run: |
+          sudo apt-get update
+          sudo apt install build-essential
+          sudo apt install gfortran
+
           
       - uses: julia-actions/cache@v2
       - uses: julia-actions/julia-buildpkg@v1
