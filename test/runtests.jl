@@ -7,7 +7,7 @@ const clean = true
     version = mktempdir() do dir
         logfile = joinpath(dir, "tmp.log")
         redirect_stdio(;stdout = logfile) do 
-            run(`neper --version`)
+            run(`$(NeperStructureGenerator.neper()) --version`);
         end
         open(logfile, "r") do io
             readline(io)

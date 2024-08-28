@@ -3,6 +3,7 @@ module NeperStructureGenerator
 
 using TOML 
 using Base.Filesystem
+using neper_jll: neper
 
 const tesselation_defaults = Dict(
     "id" => 1, # used as seed
