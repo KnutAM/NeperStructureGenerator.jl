@@ -249,7 +249,7 @@ name can be given in the `custom_mesh_name` argument.
 - `force::Bool=false`: Enables and disables overwriting of meshes.
 """
 function mesh(; tess_path::Union{String, Nothing} = nothing, meshing::Dict = Dict(), 
-    custom_mesh_name::Union{String, Nothing} = nothing, force::Bool = false)
+    ::Union{String, Nothing} = nothing, force::Bool = false)
 
     isfile(tess_path)||error("Tesselation file $(tess_path) does not exist.")
 
