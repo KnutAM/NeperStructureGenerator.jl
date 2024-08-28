@@ -3,6 +3,18 @@ using Test
 
 const clean = true
 
+@testset "neper installed" begin
+    version = mktempdir() do dir
+        logfile = joinpath(dir, "tmp.log")
+        redirect_stdio(;stdout = logfile) do 
+            run(`$(NeperStructureGenerator.neper()) --version`);
+        end
+        open(logfile, "r") do io
+            readline(io)
+        end
+    end
+    println(version)
+end
 
 @testset "NeperStructureGenerator.jl" begin
     # Write your tests here.
