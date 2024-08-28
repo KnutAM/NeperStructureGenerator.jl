@@ -228,7 +228,7 @@ function tesselate(; base_name::String = "crystal", parent_folder::String = pwd(
     args=create_cmdargs(tesselation_settings)
     create_toml_data("TESSELATION", tesselation_settings, relative_file_path)
 
-    run(`neper -T $args -o $relative_file_path -format tess,ori -oridescriptor rodrigues:active`)
+    run(`$(neper()) -T $args -o $relative_file_path -format tess,ori -oridescriptor rodrigues:active`)
     return relative_file_path
 end
 
@@ -268,7 +268,7 @@ function mesh(; tess_path::Union{String, Nothing} = nothing, meshing::Dict = Dic
         create_toml_data(mesh_path, meshing_settings, mesh_path)
     end
 
-    run(`neper -M $tess_path $(create_cmdargs(meshing_settings)) -o $mesh_path -format msh,inp`)
+    run(`$(neper()) -M $tess_path $(create_cmdargs(meshing_settings)) -o $mesh_path -format msh,inp`)
     return mesh_path
 end
 
@@ -337,7 +337,7 @@ function visualize_tesselation(output_dir::String, tess_path::String)
     base_name, ext = splitext(base_name_with_ext)
     file_name = joinpath(output_dir, base_name)
 
-    run(`neper -V $tess_file -print $file_name`)
+    run(`$(neper()) -V $tess_file -print $file_name`)
 end
 
 """
@@ -400,13 +400,13 @@ function visualize_mesh(output_dir::String, mesh_path::String; mesh_name::Union{
         base_name, ext = splitext(base_name_with_ext)
         file_name = joinpath(output_dir, base_name)
 
-        run(`neper -V $tess_path,$mesh_path -print $file_name`)
+        run(`$(neper()) -V $tess_path,$mesh_path -print $file_name`)
     elseif mesh_name === nothing && all === false
         base_name_with_ext = basename(mesh_path)
         base_name, ext = splitext(base_name_with_ext)
         file_name = joinpath(output_dir, base_name)
 
-        run(`neper -V $tess_path,$mesh_path -print $file_name`)
+        run(`$(neper()) -V $tess_path,$mesh_path -print $file_name`)
     end
     if all
         for (key, dict) in meshes
@@ -416,7 +416,7 @@ function visualize_mesh(output_dir::String, mesh_path::String; mesh_name::Union{
             base_name, ext = splitext(base_name_with_ext)
             file_name = joinpath(output_dir, base_name)
 
-            run(`neper -V $tess_path,$mesh_path -print $file_name`)
+            run(`$(neper()) -V $tess_path,$mesh_path -print $file_name`)
         end
     end
 end
