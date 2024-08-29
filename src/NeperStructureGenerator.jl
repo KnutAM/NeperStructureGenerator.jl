@@ -300,8 +300,8 @@ directory and saves it to the `output_dir` directory.
 """
 function visualize_directory(output_dir::String, visualization_dir::String)
     isdir(visualization_dir) || error("File path given, but expected directory.")
-    NeperStructureGenerator.visualize_tesselation(output_dir, visualization_dir)
     NeperStructureGenerator.visualize_mesh(output_dir, visualization_dir, all = true)
+    NeperStructureGenerator.visualize_tesselation(output_dir, visualization_dir)
 end
 
 """
