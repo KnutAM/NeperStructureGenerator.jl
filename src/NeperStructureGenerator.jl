@@ -415,6 +415,12 @@ function visualize_mesh(output_dir::String, mesh_path::String; mesh_name::Union{
             base_name_with_ext = basename(mesh_path)
             base_name, ext = splitext(base_name_with_ext)
             file_name = joinpath(output_dir, base_name)
+            if isfile(tess_path)
+                println("Tessleation file exists")
+            end
+            if isfile(mesh_path)
+                println("Mesh file exists")
+            end
 
             run(`$(neper()) -V $tess_path,$mesh_path -imageformat vtk -print $file_name`)
         end
