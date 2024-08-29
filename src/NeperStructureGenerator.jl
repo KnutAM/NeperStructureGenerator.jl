@@ -290,7 +290,7 @@ function get_unique_path(base_path::AbstractString)
         suffix += 1
     end
 end
-
+##################
 
 """
     visualize_directory(output_dir::String, visualization_dir::String)
@@ -337,7 +337,7 @@ function visualize_tesselation(output_dir::String, tess_path::String)
     base_name, ext = splitext(base_name_with_ext)
     file_name = joinpath(output_dir, base_name)
 
-    run(`$(neper()) -V $tess_file -print $file_name`)
+    run(`$(neper()) -V $tess_file -imageformat vtk -print $file_name`)
 end
 
 """
