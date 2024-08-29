@@ -53,9 +53,16 @@ function generate_directory_name(parent_folder, tesselation_settings::Dict)
 end
 
 """
-    generate_mesh_name(parent_folder::String)
+Generates a mesh name based on the number of existing meshes.
 
-    Counts the number of existing meshes, thereby creating a mesh name if no custom one was given.
+# Arguments
+- `parent_folder::String`: The path to the parent folder containing the `input.toml` file.
+
+# Returns
+- `String`: A generated mesh name in the format `"Mesh_<number>"`, where `<number>` is the count of existing meshes plus one.
+
+If a custom mesh name is not provided, this function counts the number of existing meshes
+and creates a new mesh name accordingly.
 """
 function generate_mesh_name(parent_folder)
     toml_path = joinpath(parent_folder, "input.toml")
