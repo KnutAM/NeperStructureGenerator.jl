@@ -11,9 +11,9 @@ makedocs(;
         canonical="https://KnutAM.github.io/NeperStructureGenerator.jl",
         edit_link="main",
         assets=String[],
-        repolink = "https://github.com/KnutAM/NeperStructureGenerator.jl.git"
+        repolink = "https://github.com/KnutAM/NeperStructureGenerator.jl"
     ),
-    repo = "https://github.com/KnutAM/NeperStructureGenerator.jl.git",
+    repo = "https://github.com/KnutAM/NeperStructureGenerator.jl",
     pages=[
         "Home" => "index.md",
         "API" => "API.md",
@@ -23,6 +23,6 @@ makedocs(;
 )
 
 deploydocs(;
-    repo="https://github.com/KnutAM/NeperStructureGenerator.jl.git",
+    repo="https://github.com/KnutAM/NeperStructureGenerator.jl",
     devbranch="main",
 )
