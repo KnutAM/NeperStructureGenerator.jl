@@ -1,6 +1,6 @@
 # NeperStructureGenerator
 [![experimental](http://badges.github.io/stability-badges/dist/experimental.svg)](http://github.com/badges/stability-badges)
-This package is currently **Work in Progress**.
+This package is currently **Work in Progress**!
 
 [![Dev](https://img.shields.io/badge/docs-dev-blue.svg)](https://saidharb.github.io/NeperStructureGenerator.jl/dev/)
 [![Build Status](https://github.com/saidharb/NeperStructureGenerator.jl/actions/workflows/CI.yml/badge.svg?branch=main)](https://github.com/saidharb/NeperStructureGenerator.jl/actions/workflows/CI.yml?query=branch%3Amain)
