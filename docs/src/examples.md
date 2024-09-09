@@ -79,7 +79,7 @@ This will display the mesh with the corresponding name in the tesselation direct
 
 5. Visualize Directory Example
 
-You can visualize all tessellations and meshes in a specific directory using the `NeperStructureGenerator.visualize_directory()` function. Here's how you can visualize all files in a directory:
+You can visualize all tessellations and meshes in a specific directory using the `NeperStructureGenerator.visualize_directory()` function. Here is how you can visualize all files in a directory:
 
 ```julia
 using NeperStructureGenerator
